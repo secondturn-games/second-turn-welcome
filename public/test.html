@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tailwind Test</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#294D58',
+            secondary: '#DBE5B9',
+            background: '#FDFAF3',
+            accent: '#FF8157',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-background min-h-screen">
+  <div class="flex min-h-screen flex-col items-center justify-center">
+    <div class="bg-primary text-white p-8 rounded-lg shadow-lg">
+      <h1 class="text-3xl font-bold mb-4">Tailwind CSS Test</h1>
+      <p class="mb-4">This page tests if Tailwind CSS can be loaded directly.</p>
+      <div class="flex gap-4">
+        <div class="bg-secondary text-primary p-4 rounded">Secondary Color</div>
+        <div class="bg-accent text-white p-4 rounded">Accent Color</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
