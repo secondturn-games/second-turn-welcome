@@ -78,11 +78,9 @@ export default async function ListingPage({
               <h2 className="text-2xl font-bold mb-4">About This Game</h2>
               <div className="prose max-w-none">
                 {listing.game.description ? (
-                  <div 
-                    dangerouslySetInnerHTML={{ 
-                      __html: listing.game.description.replace(/<\/p><p>/g, '</p>\n<p>') 
-                    }} 
-                  />
+                  <div className="whitespace-pre-line">
+                    {listing.game.description.replace(/<[^>]*>/g, '').replace(/&[^;]+;/g, '')}
+                  </div>
                 ) : (
                   <p>No description available</p>
                 )}

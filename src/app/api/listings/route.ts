@@ -27,6 +27,7 @@ const listingCreateSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  let validation: any = null;
   try {
     // Verify authentication
     const session = await getServerSession(authOptions);
@@ -39,7 +40,7 @@ export async function POST(request: Request) {
 
     // Parse and validate the request body
     const body = await request.json();
-    const validation = listingCreateSchema.safeParse(body);
+    validation = listingCreateSchema.safeParse(body);
 
     if (!validation.success) {
       return NextResponse.json(
@@ -123,10 +124,10 @@ export async function POST(request: Request) {
     console.error('Error creating listing:', error);
     
     // Clean up any uploaded files if there was an error
+    // We need to get the images from the validated data if it exists
     try {
-      const body = await request.json();
-      if (body.images?.length > 0) {
-        const s3DeletePromises = (body.images || []).map((img: { key: string }) => utapi.deleteFiles(img.key));
+      if (validation?.success && validation.data.images?.length > 0) {
+        await utapi.deleteFiles(validation.data.images.map((img: { key: string }) => img.key));
       }
     } catch (cleanupError) {
       console.error('Error cleaning up uploaded files:', cleanupError);
