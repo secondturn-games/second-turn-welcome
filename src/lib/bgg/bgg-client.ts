@@ -51,6 +51,13 @@ export interface BGGGame {
   versions?: BGGGameVersion[];
 }
 
+export interface BGGPublisherLink {
+  type: 'boardgamepublisher';
+  id: string;
+  value: string;
+  inbound?: boolean;
+}
+
 export interface BGGGameVersion {
   id: string;
   type: string;
