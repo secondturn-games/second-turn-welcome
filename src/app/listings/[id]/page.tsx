@@ -24,6 +24,7 @@ export default async function ListingPage({
         select: {
           id: true,
           name: true,
+          email: true,
           image: true,
           createdAt: true,
         },
