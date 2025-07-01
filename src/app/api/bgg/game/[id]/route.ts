@@ -4,9 +4,9 @@ import { parseStringPromise } from 'xml2js';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = params.id;
+  const { id } = await params;
   const { searchParams } = new URL(req.url);
   const fetchVersions = searchParams.get('versions') === 'true';
 
