@@ -3,9 +3,9 @@ import { bggClient } from '@/lib/bgg/bgg-client';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
-  const id = params.id;
+  const { id } = context.params;
 
   if (!id) {
     return NextResponse.json(
