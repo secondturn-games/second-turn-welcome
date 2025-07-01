@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 interface ErrorBoundaryProps {
   children: ReactNode;
   fallback?: ReactNode;
+  FallbackComponent?: React.ComponentType<{ error: Error; reset: () => void }>;
   onError?: (error: Error, errorInfo: ErrorInfo) => void;
 }
 
@@ -17,7 +18,7 @@ interface ErrorBoundaryState {
 /**
  * A reusable error boundary component that catches JavaScript errors in its child component tree,
  * logs those errors, and displays a fallback UI.
- * 
+ *
  * @component
  * @example
  * <ErrorBoundary>
@@ -38,7 +39,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Log the error to an error reporting service
     console.error('ErrorBoundary caught an error:', error, errorInfo);
-    
+
     // Call the onError handler if provided
     if (this.props.onError) {
       this.props.onError(error, errorInfo);
@@ -50,8 +51,12 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   };
 
   render() {
-    if (this.state.hasError) {
-      // Render the custom fallback UI if provided
+    if (this.state.hasError && this.state.error) {
+      const { FallbackComponent } = this.props;
+      if (FallbackComponent) {
+        return <FallbackComponent error={this.state.error} reset={this.handleReset} />;
+      }
+
       if (this.props.fallback) {
         return this.props.fallback;
       }
@@ -60,11 +65,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       return (
         <div className="flex h-full w-full flex-col items-center justify-center p-8 text-center">
           <h2 className="mb-4 text-xl font-bold">Something went wrong</h2>
-          {this.state.error && (
-            <pre className="mb-4 max-w-full overflow-auto rounded bg-muted p-4 text-sm">
-              {this.state.error.toString()}
-            </pre>
-          )}
+          <pre className="mb-4 max-w-full overflow-auto rounded bg-muted p-4 text-sm">
+            {this.state.error.toString()}
+          </pre>
           <Button onClick={this.handleReset} variant="outline">
             Try again
           </Button>
@@ -78,7 +81,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
 /**
  * A higher-order component that wraps a component with an ErrorBoundary
- * 
+ *
  * @param Component - The component to wrap
  * @param FallbackComponent - Optional custom fallback component to render when an error occurs
  * @returns A new component wrapped with ErrorBoundary
@@ -89,28 +92,9 @@ export function withErrorBoundary<T extends Record<string, unknown>>(
 ) {
   return function WrappedComponent(props: T) {
     return (
-      <ErrorBoundary
-        fallback={
-          FallbackComponent ? (
-            <ErrorBoundaryFallback FallbackComponent={FallbackComponent} />
-          ) : undefined
-        }
-      >
+      <ErrorBoundary FallbackComponent={FallbackComponent}>
         <Component {...props} />
       </ErrorBoundary>
     );
   };
-}
-
-// Internal component to handle the fallback rendering
-function ErrorBoundaryFallback({
-  FallbackComponent,
-  error,
-  resetErrorBoundary,
-}: {
-  FallbackComponent: React.ComponentType<{ error: Error; reset: () => void }>;
-  error: Error;
-  resetErrorBoundary: () => void;
-}) {
-  return <FallbackComponent error={error} reset={resetErrorBoundary} />;
 }
