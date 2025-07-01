@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -20,14 +20,12 @@ export default function PreviewListingPage() {
   const { toast } = useToast();
   const [listingData, setListingData] = useState<ListingData | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isFeatured, setIsFeatured] = useState(false);
 
   useEffect(() => {
     const savedData = sessionStorage.getItem('listingPreviewData');
     if (savedData) {
       setListingData(JSON.parse(savedData));
     } else {
-      // If no data, redirect to the start of the form
       router.replace('/listings/new');
     }
   }, [router]);
@@ -36,23 +34,21 @@ export default function PreviewListingPage() {
     router.push('/listings/new');
   };
 
-    const handleConfirmPost = async () => {
+  const handleConfirmPost = async () => {
     if (!listingData) return;
 
     setIsSubmitting(true);
 
     try {
-      // Always create the listing first with isFeatured set to false.
-      // The Stripe webhook will update it upon successful payment.
-      const initialPayload = {
+      const payload = {
         ...listingData.payload,
-        isFeatured: false,
+        isFeatured: false, // Featuring is temporarily disabled
       };
 
       const createResponse = await fetch('/api/listings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(initialPayload),
+        body: JSON.stringify(payload),
       });
 
       if (!createResponse.ok) {
@@ -62,32 +58,9 @@ export default function PreviewListingPage() {
 
       const { listing } = await createResponse.json();
 
-      // If the user does not want to feature the listing, we are done.
-      if (!isFeatured) {
-        sessionStorage.removeItem('listingPreviewData');
-        toast({ title: 'Success!', description: 'Your listing has been created.' });
-        router.push(`/listings/${listing.id}`); // Redirect to the new listing page
-        return;
-      }
-
-      // If the user wants to feature it, proceed to Stripe checkout.
-      const stripeResponse = await fetch('/api/stripe/checkout-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ listingId: listing.id }),
-      });
-
-      if (!stripeResponse.ok) {
-        const errorData = await stripeResponse.json();
-        // The listing exists, but payment session failed. Redirect to the non-featured listing.
-        toast({ variant: 'destructive', title: 'Payment Error', description: `Your listing was created, but we couldn't start the payment process. ${errorData.error}` });
-        router.push(`/listings/${listing.id}`);
-        return;
-      }
-
-      const { url } = await stripeResponse.json();
       sessionStorage.removeItem('listingPreviewData');
-      window.location.href = url; // Redirect to Stripe
+      toast({ title: 'Success!', description: 'Your listing has been created.' });
+      router.push(`/listings/${listing.id}`);
 
     } catch (error: any) {
       console.error('Submission error:', error);
@@ -137,28 +110,14 @@ export default function PreviewListingPage() {
                 </div>
               )}
             </div>
-            <div className="items-center flex space-x-2 my-4 p-4 border rounded-lg bg-muted/40">
-              <Checkbox
-                id="featured"
-                checked={isFeatured}
-                onCheckedChange={(checked) => setIsFeatured(checked as boolean)}
-                disabled={isSubmitting}
-              />
-              <div className="grid gap-1.5 leading-none">
-                <Label htmlFor="featured" className="text-base font-medium">
-                  Feature your listing for $5.00
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  Your listing will be highlighted and appear at the top of search results.
-                </p>
-              </div>
-            </div>
+            
+            {/* Feature listing option is temporarily disabled. */}
 
             <div className="flex justify-between items-center pt-4 border-t">
-              <Button type="button" variant="outline" onClick={handleEdit} disabled={isSubmitting}>Edit Listing</Button>
+              <button type="button" className={buttonVariants({ variant: "outline" })} onClick={handleEdit} disabled={isSubmitting}>Edit Listing</button>
               <Button type="button" onClick={handleConfirmPost} disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isFeatured ? 'Proceed to Payment' : 'Confirm & Post Listing'}
+                Confirm & Post Listing
               </Button>
             </div>
           </CardContent>
