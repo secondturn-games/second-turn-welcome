@@ -25,9 +25,7 @@ export function Header() {
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center space-x-2">
-            <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              BoardGameSwap
-            </span>
+            <img src="/images/second_turn.png" alt="Second Turn Logo" className="h-12 w-auto" />
           </Link>
           <nav className="hidden md:flex items-center gap-4">
             <Link href="/" className={cn(buttonVariants({ variant: 'ghost' }), 'text-sm font-medium transition-colors hover:text-primary', isActive('/') ? 'text-foreground' : 'text-muted-foreground')}>Home</Link>

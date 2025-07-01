@@ -14,7 +14,7 @@ export function Footer({ className }: FooterProps) {
       <Container>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">BoardGameSwap</h3>
+            <h3 className="text-lg font-semibold">Second Turn</h3>
             <p className="text-sm text-muted-foreground">
               The best place to buy, sell, and trade board games with fellow enthusiasts.
             </p>
@@ -64,7 +64,7 @@ export function Footer({ className }: FooterProps) {
         
         <div className="mt-8 border-t pt-6 text-center">
           <p className="text-sm text-muted-foreground">
-            © {currentYear} BoardGameSwap. All rights reserved.
+            © {currentYear} Second Turn. All rights reserved.
           </p>
         </div>
       </Container>

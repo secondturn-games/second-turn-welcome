@@ -10,7 +10,18 @@ import Image from 'next/image';
 import { PageLoading } from '../../components/ui/loading';
 import { ErrorBoundary } from '../../components/error-boundary';
 import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, MoreHorizontal } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { ListingStatus } from '@prisma/client';
 
 /**
  * Represents a board game with its basic information
@@ -74,7 +85,7 @@ interface Listing {
   price: number | null;
   isFree: boolean;
   condition: string;
-  isActive: boolean;
+  status: ListingStatus;
   game: Game;
   images: Array<{ id: string; url: string }>;
   createdAt: string;
@@ -121,24 +132,41 @@ export default function ProfilePage() {
    * @type {NextRouter}
    */
   const router = useRouter();
-  
-  /**
-   * State for storing the user's profile data
-   * @type {[UserProfile | null, Function]}
-   */
+  const { toast } = useToast();
   const [user, setUser] = useState<UserProfile | null>(null);
-  
-  /**
-   * State to track if the profile data is being loaded
-   * @type {[boolean, Function]}
-   */
   const [isLoading, setIsLoading] = useState(true);
-  
-  /**
-   * State to store any error that occurs during data fetching
-   * @type {[Error | null, Function]}
-   */
   const [error, setError] = useState<Error | null>(null);
+
+  const handleUpdateStatus = async (listingId: string, status: ListingStatus) => {
+    try {
+      const response = await fetch('/api/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listingId, status }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update listing status');
+      }
+
+      const updatedListing = await response.json();
+
+      setUser((currentUser) => {
+        if (!currentUser) return null;
+        return {
+          ...currentUser,
+          listings: currentUser.listings.map((l) =>
+            l.id === listingId ? { ...l, status: updatedListing.status } : l
+          ),
+        };
+      });
+
+      toast({ title: 'Success!', description: `Listing marked as ${status.toLowerCase()}.` });
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Update Failed', description: err.message });
+    }
+  };
 
   // Effect to fetch profile data when session is available
   useEffect(() => {
@@ -368,12 +396,17 @@ export default function ProfilePage() {
                       </div>
                       <div className="flex-1">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                          <div>
+                          <div className="flex items-center gap-2">
                             <h3 className="font-medium">{listing.title}</h3>
-                            <p className="text-sm text-gray-500">
-                              {listing.game.title}
-                            </p>
+                            {listing.status !== 'ACTIVE' && (
+                              <Badge variant={listing.status === 'SOLD' ? 'destructive' : 'secondary'}>
+                                {listing.status}
+                              </Badge>
+                            )}
                           </div>
+                          <p className="text-sm text-gray-500">
+                            {listing.game.title}
+                          </p>
                           <div className="font-medium">
                             {listing.isFree ? (
                               <span className="text-green-600">Free</span>
@@ -392,13 +425,43 @@ export default function ProfilePage() {
                           </span>
                         </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" asChild>
-                          <Link href={`/listings/${listing.id}/edit`}>Edit</Link>
-                        </Button>
+                      <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" asChild>
                           <Link href={`/listings/${listing.id}`}>View</Link>
                         </Button>
+                        {listing.status !== 'SOLD' && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0">
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuItem asChild>
+                                <Link href={`/listings/${listing.id}/edit`}>Edit Listing</Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              {listing.status === 'ACTIVE' && (
+                                <DropdownMenuItem onClick={() => handleUpdateStatus(listing.id, 'RESERVED')}>
+                                  Mark as Reserved
+                                </DropdownMenuItem>
+                              )}
+                              {listing.status === 'RESERVED' && (
+                                <DropdownMenuItem onClick={() => handleUpdateStatus(listing.id, 'ACTIVE')}>
+                                  Mark as Active
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem
+                                className="text-red-600"
+                                onClick={() => handleUpdateStatus(listing.id, 'SOLD')}
+                              >
+                                Mark as Sold
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -416,7 +479,9 @@ export default function ProfilePage() {
                 <div className="text-sm text-gray-500">Active Listings</div>
               </div>
               <div className="border rounded-lg p-4 text-center">
-                <div className="text-2xl font-bold">0</div>
+                <div className="text-2xl font-bold">
+                  {user.listings.filter((l) => l.status === 'SOLD').length}
+                </div>
                 <div className="text-sm text-gray-500">Sold Items</div>
               </div>
               <div className="border rounded-lg p-4 text-center">

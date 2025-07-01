@@ -16,7 +16,7 @@ export function Header({ className }: HeaderProps) {
       <Container className="flex h-16 items-center justify-between">
         <div className="flex items-center">
           <Link href="/" className="flex items-center space-x-2">
-            <span className="text-xl font-bold text-primary">BoardGameSwap</span>
+            <span className="text-xl font-bold text-primary">Second Turn</span>
           </Link>
           
           <nav className="ml-10 hidden items-center space-x-6 text-sm font-medium md:flex">

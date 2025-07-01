@@ -23,6 +23,12 @@ enum ShippingOption {
   NATIONAL_SHIPPING
 }
 
+enum ListingStatus {
+  ACTIVE
+  RESERVED
+  SOLD
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -123,8 +129,11 @@ model Listing {
   shippingOption ShippingOption @map("shipping_option")
   description    String?       @db.Text
   images         String[]
-  isActive       Boolean       @default(true) @map("is_active")
+  status         ListingStatus @default(ACTIVE)
+  isFeatured     Boolean       @default(false) @map("is_featured")
   location       String?
+  bggVersionId   String?       @map("bgg_version_id")
+  expansionIds   String[]      @map("expansion_ids")
   createdAt      DateTime      @default(now()) @map("created_at")
   updatedAt      DateTime      @updatedAt @map("updated_at")
 

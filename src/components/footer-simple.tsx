@@ -11,7 +11,7 @@ export function Footer({ className }: FooterProps) {
     <footer className={cn("border-t bg-background py-6", className)}>
       <div className="container mx-auto px-4">
         <p className="text-center text-sm text-muted-foreground">
-          © {currentYear} BoardGameSwap. All rights reserved.
+          © {currentYear} Second Turn. All rights reserved.
         </p>
       </div>
     </footer>

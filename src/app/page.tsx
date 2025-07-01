@@ -102,7 +102,7 @@ export default function Home() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/register" className={cn(buttonVariants({ variant: 'secondary', size: 'lg' }), 'text-base')}>Sign Up Free</Link>
-              <Link href="/listings" className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'text-base bg-transparent hover:bg-white/10')}>Browse Games</Link>
+              <Link href="/listings" className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'text-base')}>Browse Games</Link>
             </div>
           </div>
         </Container>

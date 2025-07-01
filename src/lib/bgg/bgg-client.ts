@@ -74,7 +74,8 @@ export class BGGClient {
 
   private async fetchFromBGG<T>(endpoint: string, params: Record<string, string>): Promise<T> {
     try {
-      const response = await axios.get(`${BGG_API_URL}${endpoint}`, {
+          console.log(`[BGGClient] Fetching from ${BGG_API_URL}${endpoint} with params:`, params);
+    const response = await axios.get(`${BGG_API_URL}${endpoint}`, {
         params,
         timeout: 10000,
       });
@@ -89,18 +90,22 @@ export class BGGClient {
     }
   }
 
-  public async searchGames(query: string): Promise<BGGSearchResult[]> {
-    const cacheKey = `search:${query.toLowerCase()}`;
+  public async searchGames(options: { query: string; type?: string | string[] }): Promise<BGGSearchResult[]> {
+    const { query, type } = options;
+    const cacheKey = `search:${query.toLowerCase()}:${type ? JSON.stringify(type) : 'all'}`;
     
     if (this.cache.has(cacheKey)) {
       return this.cache.get(cacheKey);
     }
 
-    const data = await this.fetchFromBGG<{ items: { item: BGGSearchResult[] } }>('/search', {
-      query,
-      type: 'boardgame,boardgameexpansion',
-      exact: '0',
-    });
+    const searchParams: Record<string, string> = { query, exact: '0' };
+    if (type) {
+      searchParams.type = Array.isArray(type) ? type.join(',') : type;
+    } else {
+      searchParams.type = 'boardgame,boardgameexpansion';
+    }
+
+    const data = await this.fetchFromBGG<{ items: { item: BGGSearchResult[] } }>('/search', searchParams);
 
     // Remove duplicate game IDs while preserving the first occurrence
     const uniqueResults = (data.items?.item || []).reduce<BGGSearchResult[]>((acc, current) => {
@@ -113,6 +118,34 @@ export class BGGClient {
     this.cache.set(cacheKey, uniqueResults);
     
     return uniqueResults;
+  }
+
+  public async getGamesDetails(ids: string[]): Promise<BGGGame[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+
+    const cacheKey = `games:${ids.sort().join(',')}`;
+    if (this.cache.has(cacheKey)) {
+      return this.cache.get(cacheKey);
+    }
+
+    try {
+      const data = await this.fetchFromBGG<{ items: { item: BGGGame[] } }>('/thing', {
+        id: ids.join(','),
+        stats: '1',
+      });
+
+      if (!data.items?.item) return [];
+
+      const games = Array.isArray(data.items.item) ? data.items.item : [data.items.item];
+      this.cache.set(cacheKey, games);
+      
+      return games;
+    } catch (error) {
+      console.error(`Error fetching game details for IDs ${ids.join(',')}:`, error);
+      return [];
+    }
   }
 
   public async getGameDetails(id: string): Promise<BGGGame | null> {
@@ -140,12 +173,22 @@ export class BGGClient {
     }
   }
 
-  public async searchAndGetDetails(query: string): Promise<BGGGame[]> {
-    const searchResults = await this.searchGames(query);
-    const detailedGames = await Promise.all(
-      searchResults.map((result) => this.getGameDetails(result.id))
+  public async getExpansionsForGame(id: string): Promise<BGGGame[]> {
+    const game = await this.getGameDetails(id);
+    if (!game || !game.links) {
+      return [];
+    }
+
+    const expansionLinks = game.links.filter(
+      (link) => link.type === 'boardgameexpansion'
     );
-    return detailedGames.filter((game): game is BGGGame => game !== null);
+
+    if (expansionLinks.length === 0) {
+      return [];
+    }
+
+    const expansionIds = expansionLinks.map((link) => link.id);
+    return this.getGamesDetails(expansionIds);
   }
 }
 

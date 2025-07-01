@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
-import { bggClient } from '@/lib/bgg/bgg-client';
+import { boardgameService } from '@/lib/boardgame-service';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const query = searchParams.get('q');
+  const query = searchParams.get('query');
+
 
   if (!query) {
     return NextResponse.json(
@@ -13,12 +14,12 @@ export async function GET(request: Request) {
   }
 
   try {
-    const results = await bggClient.searchGames(query);
+    const results = await boardgameService.search({ query });
     return NextResponse.json({ results });
   } catch (error) {
-    console.error('Error searching BGG:', error);
+    console.error('Error in board game search API:', error);
     return NextResponse.json(
-      { error: 'Failed to search BGG' },
+      { error: 'Failed to fetch search results' },
       { status: 500 }
     );
   }

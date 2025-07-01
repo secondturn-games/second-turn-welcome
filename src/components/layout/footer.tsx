@@ -10,7 +10,7 @@ export function Footer() {
       <div className="container py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-lg font-semibold mb-4">BoardGameSwap</h3>
+            <h3 className="text-lg font-semibold mb-4">Second Turn</h3>
             <p className="text-sm text-muted-foreground">
               The best place to buy, sell, and trade board games with fellow enthusiasts.
             </p>
@@ -83,7 +83,7 @@ export function Footer() {
         </div>
         <div className="mt-8 pt-8 border-t flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-muted-foreground">
-            © {currentYear} BoardGameSwap. All rights reserved.
+            © {currentYear} Second Turn. All rights reserved.
           </p>
           <div className="flex items-center gap-4">
             <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">

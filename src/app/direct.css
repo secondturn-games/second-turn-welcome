@@ -1,9 +1,9 @@
 /* Direct CSS without Tailwind */
 :root {
   --color-primary: #294D58;
-  --color-secondary: #DBE5B9;
-  --color-background: #FDFAF3;
-  --color-accent: #FF8157;
+  --color-secondary: #6C8C64;
+  --color-background: #FFFBED;
+  --color-accent: #DBE5B9;
 }
 
 body {

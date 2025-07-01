@@ -8,7 +8,7 @@ export function Header({ className }: HeaderProps) {
   return (
     <header className={cn("bg-background border-b w-full py-4", className)}>
       <div className="container mx-auto px-4">
-        <h1 className="text-xl font-bold">BoardGameSwap</h1>
+        <h1 className="text-xl font-bold">Second Turn</h1>
       </div>
     </header>
   );

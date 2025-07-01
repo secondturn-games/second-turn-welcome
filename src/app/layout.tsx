@@ -11,11 +11,11 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'BoardGameSwap - Trade Your Board Games',
-  description: 'A peer-to-peer marketplace for board game enthusiasts to buy, sell, and trade board games.',
-  keywords: ['board games', 'trading', 'marketplace', 'board game exchange', 'sell board games'],
-  authors: [{ name: 'BoardGameSwap Team' }],
-  creator: 'BoardGameSwap',
+  title: 'Second Turn - For Your Games',
+  description: 'A platform to trade and swap board games with other enthusiasts.',
+  keywords: ['board games', 'trade', 'swap', 'gaming', 'hobby'],
+  authors: [{ name: 'Second Turn Team' }],
+  creator: 'Second Turn',
 };
 
 export const viewport: Viewport = {
@@ -67,9 +67,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
               extend: {
                 colors: {
                   primary: '#294D58',
-                  secondary: '#DBE5B9',
-                  background: '#FDFAF3',
-                  accent: '#FF8157',
+                  secondary: '#6C8C64',
+                  background: '#FFFBED',
+                  accent: '#DBE5B9',
                 }
               }
             }

@@ -4,23 +4,26 @@ import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
 import { utapi } from '../uploadthing/core';
+import { GameCondition, ShippingOption, Prisma } from '@prisma/client';
 
 // Define the schema for the request body
-const createListingSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
+const listingCreateSchema = z.object({
   description: z.string().optional(),
-  price: z.number().min(0, 'Price must be a positive number'),
-  isFree: z.boolean().default(false),
-  condition: z.enum(['MINT', 'LIKE_NEW', 'GOOD', 'FAIR', 'POOR']),
-  shippingOption: z.enum(['LOCAL_PICKUP', 'NATIONAL_SHIPPING']),
+  price: z.number().min(0),
+  isFree: z.boolean(),
+  condition: z.nativeEnum(GameCondition),
+  shippingOption: z.nativeEnum(ShippingOption),
   location: z.string().optional(),
-  gameId: z.string().min(1, 'Game ID is required'),
+  gameId: z.string(),
+  bggVersionId: z.string().optional(),
+  expansionIds: z.array(z.string()).optional(),
   images: z.array(z.object({
     key: z.string(),
     name: z.string(),
     size: z.number(),
-    url: z.string(),
+    url: z.string().url(),
   })).optional(),
+  isFeatured: z.boolean().optional(),
 });
 
 export async function POST(request: Request) {
@@ -36,7 +39,7 @@ export async function POST(request: Request) {
 
     // Parse and validate the request body
     const body = await request.json();
-    const validation = createListingSchema.safeParse(body);
+    const validation = listingCreateSchema.safeParse(body);
 
     if (!validation.success) {
       return NextResponse.json(
@@ -45,7 +48,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { title, description, price, isFree, condition, shippingOption, location, gameId, images } = validation.data;
+    const { description, price, isFree, condition, shippingOption, location, gameId, bggVersionId, expansionIds, images, isFeatured } = validation.data;
 
     // Check if the game exists
     const game = await prisma.game.findUnique({
@@ -55,9 +58,9 @@ export async function POST(request: Request) {
     if (!game) {
       // Clean up any uploaded files if game not found
       if (images && images.length > 0) {
-        await utapi.deleteFiles(images.map(img => img.key));
+        await utapi.deleteFiles(images.map((img: { key: string }) => img.key));
       }
-      
+
       return NextResponse.json(
         { error: 'Game not found' },
         { status: 404 }
@@ -72,36 +75,37 @@ export async function POST(request: Request) {
     if (!user) {
       // Clean up any uploaded files if user not found
       if (images && images.length > 0) {
-        await utapi.deleteFiles(images.map(img => img.key));
+        await utapi.deleteFiles(images.map((img: { key: string }) => img.key));
       }
-      
+
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
       );
     }
 
-    // Create the listing
+    // Create the listing data object with the correct type
+    const data: Prisma.ListingUncheckedCreateInput = {
+      description,
+      price: isFree ? 0 : price,
+      isFree,
+      condition,
+      shippingOption,
+      location,
+      userId: user.id,
+      gameId: gameId,
+      images: images?.map((img) => img.url) || [],
+      isFeatured: isFeatured || false,
+      expansionIds: expansionIds || [],
+    };
+
+    // Conditionally add optional fields
+    if (bggVersionId) {
+      data.bggVersionId = bggVersionId;
+    }
+
     const listing = await prisma.listing.create({
-      data: {
-        title,
-        description,
-        price: isFree ? 0 : price,
-        isFree,
-        condition,
-        shippingOption,
-        location,
-        userId: user.id,
-        gameId,
-        images: {
-          create: images?.map(img => ({
-            key: img.key,
-            name: img.name,
-            size: img.size,
-            url: img.url,
-          })) || [],
-        },
-      },
+      data,
       include: {
         game: true,
         user: {
@@ -111,7 +115,6 @@ export async function POST(request: Request) {
             email: true,
           },
         },
-        images: true,
       },
     });
 
@@ -123,7 +126,7 @@ export async function POST(request: Request) {
     try {
       const body = await request.json();
       if (body.images?.length > 0) {
-        await utapi.deleteFiles(body.images.map((img: any) => img.key));
+        const s3DeletePromises = (body.images || []).map((img: { key: string }) => utapi.deleteFiles(img.key));
       }
     } catch (cleanupError) {
       console.error('Error cleaning up uploaded files:', cleanupError);
