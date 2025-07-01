@@ -2,7 +2,7 @@
 
 import { useState, useEffect, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { GameSearch } from '@/components/listings/game-search';
+import { GameSearch, type GameSearchResult } from '@/components/listings/game-search';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -115,6 +115,18 @@ export default function NewListingPage() {
     }
   }, [selectedGame, toast]);
 
+    const handleGameSelection = (game: GameSearchResult | null) => {
+    if (game) {
+      setSelectedGame({
+        BGGId: game.id,
+        Name: game.name,
+        YearPublished: game.yearPublished?.toString() ?? '',
+      });
+    } else {
+      setSelectedGame(null);
+    }
+  };
+
   const handleGoBack = () => {
     setSelectedGame(null);
     setGameDetails(null);
@@ -202,7 +214,7 @@ export default function NewListingPage() {
               <CardDescription>Search for the board game you want to list for sale.</CardDescription>
             </CardHeader>
             <CardContent>
-              <GameSearch onSelectGame={setSelectedGame} />
+              <GameSearch onSelectGame={handleGameSelection} />
             </CardContent>
           </Card>
         </div>

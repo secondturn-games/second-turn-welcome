@@ -4,11 +4,11 @@ import * as React from 'react';
 import { useState, useCallback } from 'react';
 import { Search, Loader2, X, ChevronRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { buttonVariants } from '@/components/ui/button';
+import { badgeVariants } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
-interface GameSearchResult {
+export interface GameSearchResult {
   id: string;
   name: string;
   yearPublished: number | null;
@@ -98,9 +98,15 @@ export function GameSearch({
               <p className="text-sm text-muted-foreground">{selectedGame.yearPublished}</p>
             )}
           </div>
-          <Button variant="ghost" size="icon" onClick={handleClearSelection} className="-mr-2 -mt-2 h-8 w-8">
+          <button
+            onClick={handleClearSelection}
+            className={cn(
+              buttonVariants({ variant: 'ghost', size: 'icon' }),
+              '-mr-2 -mt-2 h-8 w-8'
+            )}
+          >
             <X className="h-4 w-4" />
-          </Button>
+          </button>
         </div>
       </div>
     );
@@ -121,10 +127,14 @@ export function GameSearch({
             autoComplete="off"
           />
         </div>
-        <Button onClick={handleSearch} disabled={isLoading || !query.trim()}>
+        <button
+          onClick={handleSearch}
+          disabled={isLoading || !query.trim()}
+          className={cn(buttonVariants({ variant: 'default' }))}
+        >
           {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
           <span className="ml-2 hidden sm:inline">Search</span>
-        </Button>
+        </button>
       </div>
 
       {isLoading && (
@@ -149,9 +159,9 @@ export function GameSearch({
                   <div className="flex-grow">
                     <div className="flex items-center gap-2">
                       <h4 className="font-medium text-foreground">{game.name}</h4>
-                      <Badge variant={game.type === 'base game' ? 'default' : 'secondary'}>
+                      <div className={cn(badgeVariants({ variant: game.type === 'base game' ? 'default' : 'secondary' }))}>
                         {game.type === 'base game' ? 'Base' : 'Expansion'}
-                      </Badge>
+                      </div>
                     </div>
                     <div className="text-sm text-muted-foreground">
                       {game.yearPublished && <span>{game.yearPublished} &middot; </span>}
