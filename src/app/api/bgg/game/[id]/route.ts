@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { bggClient } from '@/lib/bgg/bgg-client';
-import { parseStringPromise } from 'xml2js';
+
 
 export async function GET(
   req: NextRequest,
@@ -29,18 +29,16 @@ export async function GET(
 
     let versions = null;
     if (fetchVersions) {
-      const response = await fetch(`https://boardgamegeek.com/xmlapi2/thing?id=${id}&versions=1`);
-      const xml = await response.text();
-      const parsed = await parseStringPromise(xml);
-      const item = parsed.items?.item?.[0];
-      if (item && item.versions?.[0]?.item) {
-        versions = item.versions[0].item.map((v: any) => ({
-          id: v.$.id,
-          name: v.name?.[0]?.$?.value || 'N/A',
-          year: v.yearpublished?.[0]?.$?.value || 'N/A',
-          publisher: v.link?.find((l: any) => l.$.type === 'boardgamepublisher')?.$.value || '',
-          thumbnail: v.thumbnail?.[0] || '',
-          image: v.image?.[0] || '',
+      const rawVersions = await bggClient.getGameVersions(id);
+      if (rawVersions) {
+        versions = rawVersions.map((v) => ({
+          id: v.id,
+          name: v.name?.value || 'N/A',
+          year: v.yearpublished?.value || 'N/A',
+          publisher:
+            v.links?.find((l) => l.type === 'boardgamepublisher')?.value || '',
+          thumbnail: v.thumbnail || '',
+          image: v.image || '',
         }));
       }
     }

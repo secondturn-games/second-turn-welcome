@@ -5,7 +5,7 @@ const BGG_API_URL = process.env.BGG_API_URL || 'https://boardgamegeek.com/xmlapi
 const parser = new XMLParser({
   ignoreAttributes: false,
   attributeNamePrefix: '',
-  isArray: (name) => ['item', 'link', 'name', 'rank'].includes(name),
+    isArray: (name: string) => ['item', 'link', 'name', 'rank'].includes(name),
 });
 
 export interface BGGGame {
@@ -48,6 +48,17 @@ export interface BGGGame {
     value: string;
     [key: string]: any;
   }>;
+  versions?: BGGGameVersion[];
+}
+
+export interface BGGGameVersion {
+  id: string;
+  type: string;
+  thumbnail?: string;
+  image?: string;
+  links?: BGGPublisherLink[];
+  name?: { type: string; sortindex: string; value: string };
+  yearpublished?: { value: string };
 }
 
 export interface BGGSearchResult {
@@ -189,6 +200,30 @@ export class BGGClient {
 
     const expansionIds = expansionLinks.map((link) => link.id);
     return this.getGamesDetails(expansionIds);
+  }
+
+  public async getGameVersions(id: string): Promise<BGGGameVersion[] | null> {
+    const cacheKey = `versions:${id}`;
+    if (this.cache.has(cacheKey)) {
+      return this.cache.get(cacheKey);
+    }
+
+    try {
+      const data = await this.fetchFromBGG<{ items: { item: BGGGame } }>('/thing', {
+        id,
+        versions: '1',
+      });
+
+      if (!data.items?.item?.versions) return null;
+
+      const versions = Array.isArray(data.items.item.versions) ? data.items.item.versions : [data.items.item.versions];
+      this.cache.set(cacheKey, versions);
+
+      return versions;
+    } catch (error) {
+      console.error(`Error fetching versions for ID ${id}:`, error);
+      return null;
+    }
   }
 }
 
