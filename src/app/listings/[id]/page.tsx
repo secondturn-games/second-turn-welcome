@@ -11,12 +11,13 @@ import { authOptions } from '@/lib/auth';
 export default async function ListingPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   
   const listing = await prisma.listing.findUnique({
-    where: { id: params.id, isActive: true },
+    where: { id: id, isActive: true },
     include: {
       game: true,
       user: {
