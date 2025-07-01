@@ -17,7 +17,7 @@ export default async function ListingPage({
   const session = await getServerSession(authOptions);
   
   const listing = await prisma.listing.findFirst({
-    where: { id: id, isActive: true },
+    where: { id: id, status: 'ACTIVE' },
     include: {
       game: true,
       user: {
