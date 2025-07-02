@@ -6,6 +6,14 @@ import { z } from 'zod';
 import { utapi } from '../uploadthing/core';
 import { GameCondition, ShippingOption, Prisma } from '@prisma/client';
 
+// Define types
+type ImageType = {
+  key: string;
+  name: string;
+  size: number;
+  url: string;
+};
+
 // Define the schema for the request body
 const listingCreateSchema = z.object({
   description: z.string().optional(),
@@ -27,6 +35,7 @@ const listingCreateSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  let validation: z.SafeParseReturnType<any, z.infer<typeof listingCreateSchema>> | null = null;
   try {
     // Verify authentication
     const session = await getServerSession(authOptions);
@@ -39,7 +48,7 @@ export async function POST(request: Request) {
 
     // Parse and validate the request body
     const body = await request.json();
-    const validation = listingCreateSchema.safeParse(body);
+    validation = listingCreateSchema.safeParse(body);
 
     if (!validation.success) {
       return NextResponse.json(
@@ -58,7 +67,7 @@ export async function POST(request: Request) {
     if (!game) {
       // Clean up any uploaded files if game not found
       if (images && images.length > 0) {
-        await utapi.deleteFiles(images.map((img: { key: string }) => img.key));
+        await utapi.deleteFiles(images.map((img: ImageType) => img.key));
       }
 
       return NextResponse.json(
@@ -75,7 +84,7 @@ export async function POST(request: Request) {
     if (!user) {
       // Clean up any uploaded files if user not found
       if (images && images.length > 0) {
-        await utapi.deleteFiles(images.map((img: { key: string }) => img.key));
+        await utapi.deleteFiles(images.map((img: ImageType) => img.key));
       }
 
       return NextResponse.json(
@@ -94,7 +103,7 @@ export async function POST(request: Request) {
       location,
       userId: user.id,
       gameId: gameId,
-      images: images?.map((img) => img.url) || [],
+      images: images?.map((img: ImageType) => img.url) || [],
       isFeatured: isFeatured || false,
       expansionIds: expansionIds || [],
     };
@@ -123,10 +132,10 @@ export async function POST(request: Request) {
     console.error('Error creating listing:', error);
     
     // Clean up any uploaded files if there was an error
+    // We need to get the images from the validated data if it exists
     try {
-      const body = await request.json();
-      if (body.images?.length > 0) {
-        const s3DeletePromises = (body.images || []).map((img: { key: string }) => utapi.deleteFiles(img.key));
+      if (validation?.success && validation.data.images && validation.data.images.length > 0) {
+        await utapi.deleteFiles(validation.data.images.map((img: ImageType) => img.key));
       }
     } catch (cleanupError) {
       console.error('Error cleaning up uploaded files:', cleanupError);
