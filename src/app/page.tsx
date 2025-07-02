@@ -14,7 +14,21 @@ const GameSearch = dynamic(
   { ssr: false }
 );
 
+// Dynamically import ComingSoon with SSR disabled
+const ComingSoon = dynamic(
+  () => import('@/components/coming-soon').then(mod => mod.ComingSoon),
+  { ssr: false }
+);
+
 export default function Home() {
+  // Check if coming soon mode is enabled
+  // Note: You can manually change this to true/false or use environment variables in production
+  const isComingSoon = true; // Set to false to show full site
+  
+  // If coming soon mode is enabled, show the coming soon page
+  if (isComingSoon) {
+    return <ComingSoon />;
+  }
   const [selectedGame, setSelectedGame] = useState(null);
 
   const handleGameSelect = (game: any) => {
