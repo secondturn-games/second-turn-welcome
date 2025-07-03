@@ -6,7 +6,19 @@ const nextConfig: NextConfig = {
     // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
-  /* config options here */
+  async redirects() {
+    // In production, redirect non-landing pages to maintenance if PRODUCTION_MODE is set
+    if (process.env.NODE_ENV === 'production' && process.env.PRODUCTION_MODE === 'landing_only') {
+      return [
+        {
+          source: '/((?!^/$|_next|static|favicon.ico|maintenance|api).*)',
+          destination: '/maintenance',
+          permanent: false,
+        },
+      ];
+    }
+    return [];
+  },
 };
 
 export default nextConfig;
